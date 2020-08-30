@@ -14,13 +14,14 @@ assert deserialize(serialize(b)) == b  # bin8
 assert deserialize(serialize(b"12345")) == bytearray(b"12345")
 b = bytearray(list(range(256)) + list(range(128)))
 assert deserialize(serialize(b)) == b  # bin16
-l = []
-for _ in range(257):
-    l += list(range(256))
-b = bytearray(l)
-assert deserialize(serialize(b)) == b  # bin32
+if not is_mpy:  # memory limit
+    l = []
+    for _ in range(257):
+        l += list(range(256))
+    b = bytearray(l)
+    assert deserialize(serialize(b)) == b  # bin32
+    del l
 del b
-del l
 ## == Float == ##
 x = -3.14159265359
 p = 6
@@ -39,17 +40,26 @@ assert deserialize(serialize(-10)) == -10  # negative fixint
 assert deserialize(serialize(200)) == 200  # uint8
 assert deserialize(serialize(1000)) == 1000  # uint16
 assert deserialize(serialize(70000)) == 70000  # uint32
-assert deserialize(serialize(4300000000)) == 4300000000  # uint64
+try:
+    assert deserialize(serialize(4300000000)) == 4300000000  # uint64
+except OverflowError:
+    print("Not support 'uint64' on this board (sys.maxsize: %d)" % sys.maxsize)
 assert deserialize(serialize(-120)) == -120  # int8
 assert deserialize(serialize(-30000)) == -30000  # int16
 assert deserialize(serialize(-40000)) == -40000  # int32
-assert deserialize(serialize(-2200000000)) == -2200000000  # int64
+try:
+    assert deserialize(serialize(-2200000000)) == -2200000000  # int64
+except OverflowError:
+    print("Not support 'int64' on this board (sys.maxsize: %d)" % sys.maxsize)
 ## == String == ##
 s = "1234567890"
 assert deserialize(serialize(s)) == s  # fixstr
 assert deserialize(serialize(s * 4)) == s * 4  # str8
 assert deserialize(serialize(s * 30)) == s * 30  # str16
-assert deserialize(serialize(s * 7000)) == s * 7000  # str32
+try:
+    assert deserialize(serialize(s * 7000)) == s * 7000  # str32
+except MemoryError:
+    print("'str32' causes memory allocation failed on this board")
 del s
 
 
