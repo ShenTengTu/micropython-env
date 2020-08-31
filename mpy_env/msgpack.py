@@ -40,7 +40,7 @@ _iter_encode = (
 _number_encode = lambda prefix, fmt, f: prefix + struct.pack(">%s" % fmt, f)
 
 
-def serialize(obj, float_precision=28, float_fmt="f"):
+def serialize(obj, single_float=False):
     """
     Simple function for MessagePack serialization.
 
@@ -50,9 +50,9 @@ def serialize(obj, float_precision=28, float_fmt="f"):
     ## == Nil, Boolean == ##
     if obj is None:
         return b"\xc0"
-    if obj is True:
-        return b"\xc2"
     if obj is False:
+        return b"\xc2"
+    if obj is True:
         return b"\xc3"
     ## == Binary == ##
     if t is bytearray:
@@ -72,11 +72,11 @@ def serialize(obj, float_precision=28, float_fmt="f"):
         f32_max = (2 - 2 ** -23) * 2 ** 127
         f64_max = (2 - 2 ** -52) * 2 ** 1023
         if obj >= -f32_max and obj <= f32_max:  # float32
-            if float_fmt == "d":  # float64
-                return _number_encode(b"\xcb", "d", round(obj, float_precision))
-            return _number_encode(b"\xca", "f", round(obj, float_precision))
+            if not single_float:  # float64
+                return _number_encode(b"\xcb", "d", obj)
+            return _number_encode(b"\xca", "f", obj)
         if obj >= -f64_max and obj <= f64_max:  # float64
-            return _number_encode(b"\xcb", "d", round(obj, float_precision))
+            return _number_encode(b"\xcb", "d", obj)
         raise OverflowError("The float is out of the range")
     ## == Integer == ##
     if t is int:
@@ -145,11 +145,9 @@ def serialize(obj, float_precision=28, float_fmt="f"):
     raise TypeError("The object type is unsupport.")
 
 
-def deserialize(raw_data, float_precision=28):
+def deserialize(raw_data):
     """
     Simple function for MessagePack de-serialization.
-
-    - Deserialize binary type as bytearray
 
     **Note : Not support 'Extension' type**
     """
@@ -177,8 +175,6 @@ def deserialize(raw_data, float_precision=28):
         for _ in range(n_items):  # handle N items
             k, p_k = _run(items_data[pointer:], pointer)
             v, p_v = _run(items_data[p_k:], p_k)
-            if type(k) is bytearray:  # bytearray is unhashable
-                k = bytes(k)
             c[k] = v
 
             # If the element is sub list,
@@ -198,16 +194,16 @@ def deserialize(raw_data, float_precision=28):
         if prefix == b"\xc0":
             return (None, pointer + 1)
         if prefix == b"\xc2":
-            return (True, pointer + 1)
-        if prefix == b"\xc3":
             return (False, pointer + 1)
+        if prefix == b"\xc3":
+            return (True, pointer + 1)
         ## == Binary == ##
         prefixs = b"\xc4\xc5\xc6"
         if prefix in prefixs:
             index = 2 ** prefixs.index(prefix)
             length = _b_to_uint(raw[1 : index + 1])
             return (
-                bytearray(raw[index + 1 : index + length + 1]),
+                raw[index + 1 : index + length + 1],
                 pointer + 1 + index + length,
             )
         ## == Float == ##
@@ -217,12 +213,12 @@ def deserialize(raw_data, float_precision=28):
             float_data = raw[1 : length + 1]
             if length == 4:
                 return (
-                    round(struct.unpack(">f", float_data)[0], float_precision),
+                    struct.unpack(">f", float_data)[0],
                     pointer + 1 + length,
                 )
             if length == 8:
                 return (
-                    round(struct.unpack(">d", float_data)[0], float_precision),
+                    struct.unpack(">d", float_data)[0],
                     pointer + 1 + length,
                 )
         ## == Integer == ##

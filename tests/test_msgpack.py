@@ -9,31 +9,27 @@ assert deserialize(serialize(True)) == True
 assert deserialize(serialize(False)) == False
 ## == Binary == ##
 b = bytearray(range(128))
-assert deserialize(serialize(b)) == b  # bin8
-# deserialize binary type as bytearray
-assert deserialize(serialize(b"12345")) == bytearray(b"12345")
+x = deserialize(serialize(b))
+assert type(x) is bytes
+assert x == bytes(b)  # bin8
 b = bytearray(list(range(256)) + list(range(128)))
-assert deserialize(serialize(b)) == b  # bin16
+assert deserialize(serialize(b)) == bytes(b)  # bin16
 if not is_mpy:  # memory limit
     l = []
     for _ in range(257):
         l += list(range(256))
     b = bytearray(l)
-    assert deserialize(serialize(b)) == b  # bin32
+    assert deserialize(serialize(b)) == bytes(b)  # bin32
     del l
 del b
 ## == Float == ##
 x = -3.14159265359
-p = 6
-assert deserialize(serialize(0.25)) == 0.25  # float32
-assert deserialize(serialize(x, float_precision=p), float_precision=p) == round(
-    x, p
-)  # float32
-assert deserialize(serialize(x, float_fmt="d")) == x  # float64
+assert deserialize(serialize(0.25, single_float=True)) == 0.25  # float32
+assert round(deserialize(serialize(x, single_float=True)), 6) == round(x, 6)  # float32
+assert deserialize(serialize(x)) == x  # float64
 x += -3.5e38
 assert deserialize(serialize(x)) == x  # float64
 del x
-del p
 ## == Integer == ##
 assert deserialize(serialize(10)) == 10  # positive fixint
 assert deserialize(serialize(-10)) == -10  # negative fixint
@@ -71,13 +67,6 @@ def assertListEqual(x, y):
         item_y = y[i]
         type_x = type(item_x)
         type_y = type(item_y)
-        # deserialize binary type as bytearray
-        if type_x is bytes:
-            item_x = bytearray(item_x)
-            type_x = type(item_x)
-        if type_y is bytes:
-            item_y = bytearray(item_y)
-            type_y = type(item_y)
         assert type_x == type_y
         if type_x is list:
             assertListEqual(item_x, item_y)
@@ -95,10 +84,6 @@ def assertDictEqual(x, y):
         v_y = y[k_x]
         type_x = type(v_x)
         type_y = type(v_y)
-        # deserialize binary type as bytearray for item value
-        if type_y is bytes:
-            v_y = bytearray(v_y)
-            type_y = type(v_y)
         assert type_x == type_y
         if type_x is list:
             assertListEqual(v_x, v_y)
