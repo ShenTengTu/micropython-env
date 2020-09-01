@@ -77,3 +77,10 @@ mpy-put-test:
 	@echo "remove local 'env.json' & 'env.msgpack'" && rm ./env.json &&rm ./env.msgpack
 mpy-put-example:
 	@$(call fn_mpfs, "open $(MPFSHELL_PORT);lcd examples;put env.json;mput \w+\.py;ls")
+
+# distribution
+sdist:
+	@python setup.py sdist
+sdist-clean:
+	@rm -rf ./dist ./*egg-info ./MANIFEST
+	
