@@ -1,10 +1,10 @@
 #!/bin/sh
-# The firmware file will be stored at the application data folder of "micropy-cli".
-MICROPY_PATH="$HOME/.micropy"
-FIRMWARE_PATH="$MICROPY_PATH/firmwares"
+# The firmware file will be stored at the application data folder of MicroPython unix port.
+MPY_PATH="$HOME/.micropython"
+FIRMWARE_PATH="$MPY_PATH/firmwares"
 
 # Create directory "$FIRMWARE_PATH"  if not exist
-[ ! -d "$FIRMWARE_PATH" ] && mkdir "$FIRMWARE_PATH"
+[ ! -d "$FIRMWARE_PATH" ] && mkdir -p "$FIRMWARE_PATH"
 
 # arg1 : firmware name
 [ -z "$1" ] && { echo "1st argument must specify the firmware name." && exit; }
