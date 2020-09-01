@@ -26,7 +26,7 @@ print("dump 'env.json' & 'env.msgpack' for testing")
 endef
 export _pyc_0
 
-.PHONY: format install-firmware testing mpy-open mpy-ls mpy-clean mpy-init mpy-install mpy-put-test
+.PHONY: format install-firmware testing mpy-open mpy-ls mpy-clean mpy-init mpy-install mpy-put-test mpy-put-example
 
 format:
 	@black .
@@ -75,3 +75,5 @@ mpy-put-test:
 	@python -c "$$_pyc_0"
 	@$(call fn_mpfs, "open $(MPFSHELL_PORT);put env.json;put env.msgpack;lcd tests;mput test_\w+\.py;ls")
 	@echo "remove local 'env.json' & 'env.msgpack'" && rm ./env.json &&rm ./env.msgpack
+mpy-put-example:
+	@$(call fn_mpfs, "open $(MPFSHELL_PORT);lcd examples;put env.json;mput \w+\.py;ls")
