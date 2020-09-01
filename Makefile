@@ -26,7 +26,7 @@ print("dump 'env.json' & 'env.msgpack' for testing")
 endef
 export _pyc_0
 
-.PHONY: format install-firmware testing mpy-open mpy-ls mpy-clean mpy-init mpy-install mpy-put-test mpy-put-example
+.PHONY: format install-firmware testing mpy-open mpy-ls mpy-clean mpy-init mpy-install mpy-put-test mpy-put-example sdist sdist-clean upload-pypi upload-testpypi
 
 format:
 	@black .
@@ -81,6 +81,11 @@ mpy-put-example:
 # distribution
 sdist:
 	@python setup.py sdist
+	@rm -rf ./dist/*.tar.gz.orig
 sdist-clean:
 	@rm -rf ./dist ./*egg-info ./MANIFEST
+upload-pypi:
+	@twine upload --repository pypi dist/*
+upload-testpypi:
+	@twine upload --repository testpypi dist/*
 	
