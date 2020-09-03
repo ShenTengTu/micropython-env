@@ -29,9 +29,10 @@ put_env('tuple', ('a', 1))
 # Testing
 Currentl testing environment:
 - Python 3.7
-- MicroPython 1.12 (unix port & esp32 port)
+- MicroPython unix port 1.12 ＆ 1.13
+- MicroPython esp32 port 1.12＆ 1.13
 
-Before tesing, you need to compile Micopython unix port executable first, see [offcial GitHub Wiki].
+Before tesing, you need to compile Micopython unix port executable first, see [offcial GitHub Wiki] to setup.
 
 We use [mpfshell] to interactive with MicroPython board,  please install the latest release from PyPi.
 ```
@@ -49,41 +50,23 @@ git clone https://github.com/ShenTengTu/micropython-env.git
 cd micropython-env
 ```
 
+You can execute the follow command to build muitiple versions of MicroPython unix port.
+```
+export MPY_PATH=<local_micropython_repo> && make build-mpy
+```
+> It will create symbolic links into user binaries directory after building.
+
 To test on Python & MicroPython unix port,  execute the command as below.
 ```
-make testing
+make testing 
 ```
+>  It will run testing on multiple MicroPython unix port versions.
 
-Before testing on the board, you need upload files first.
-
-Connect the board to PC, execute the command as below to clean up the file system first:
+To test on ESP32 board, execute the follow command.
 ```
-make mpy-clean
+make mpy-testing-esp32
 ```
-
-Then install `mpy_env` package and upload testing files to the board :
-```
-make mpy-install
-make mpy-put-test
-```
-
-Open mpfshell prompt and enter REPL:
-```
-make mpy-open
-...
-mpfs>  repl
-```
-
-Execute testing scripts as below:
-```
-MicroPython v1.12 on 2019-12-20; ESP32 module with ESP32
-Type "help()" for more information.
->>> import test_msgpack
-...
->>> import test_mpy_env
-...
-```
-
+>  It will run testing on multiple MicroPython esp32 port versions.
 
 [JSON]: https://www.json.org/ 
 [MessagePack]: https://msgpack.org/
