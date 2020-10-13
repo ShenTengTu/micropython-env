@@ -39,6 +39,13 @@ class _Env:
     verbose = False
 
     @staticmethod
+    def _get_cwd():
+        if hasattr(os, "getcwd"):
+            return os.getcwd()
+        else:
+            return os.getenv("PWD")  # unix port
+
+    @staticmethod
     def _select_exist_file(path, *args):
         result = None
         for p in (path,) + args:
@@ -53,7 +60,7 @@ class _Env:
     @classmethod
     def load_from_json(cls):
         if not cls.__loaded:
-            cwd = os.getcwd()
+            cwd = cls._get_cwd()
             file_path = cls._select_exist_file(cwd + "/env.json")
             if file_path is None:
                 if cls.verbose:
@@ -70,7 +77,7 @@ class _Env:
     @classmethod
     def load_from_msgpack(cls):
         if not cls.__loaded:
-            cwd = os.getcwd()
+            cwd = cls._get_cwd()
             file_path = cls._select_exist_file(cwd + "/env", cwd + "/env.msgpack")
             if file_path is None:
                 if cls.verbose:

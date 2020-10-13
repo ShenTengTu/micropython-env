@@ -71,7 +71,9 @@ mk_vars["mpy_mk_tests_dirs"] = cmds[0]
 mk_vars["mpy_put_tests_files"] = cmds[1]
 mk_vars["mpy_rm_tests"] = cmds[2]
 
-cmds = generate_cmds_for_upload(path_examples, path_examples, file_regex="^\w+\.(py|json)$$")
+cmds = generate_cmds_for_upload(
+    path_examples, path_examples, file_regex="^\w+\.(py|json)$$"
+)
 mk_vars["mpy_mk_examples_dirs"] = cmds[0]
 mk_vars["mpy_put_examples_files"] = cmds[1]
 mk_vars["mpy_rm_examples"] = cmds[2]

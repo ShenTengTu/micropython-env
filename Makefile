@@ -100,18 +100,22 @@ testing: $(py_testing_targets)
 
 ## Testing for Python 3.7.8
 py-test:
+	@python -c "$$_pyc_0"
 	@echo "[Testing - Python]"
-	@python -m tests.test_msgpack
-	@python -m tests.test_mpy_env
+	@python -B -m tests.test_msgpack
+	@python -B -m tests.test_mpy_env
+	@echo "remove local 'env.json' & 'env.msgpack'" && rm ./env.json &&rm ./env.msgpack
 
 ## Testing for MicroPython (unix port)
 mpy-unix-test:
+	@python -c "$$_pyc_0"
 	@for i in $(mpy_unix_build_versions); do \
 		echo "[Testing - MicroPython (unix port) $$i]" ; \
 		./bin/mpy_ver.sh $$i ; \
 		micropython -m tests.test_msgpack ; \
 		micropython -m tests.test_mpy_env ; \
 	done
+	@echo "remove local 'env.json' & 'env.msgpack'" && rm ./env.json &&rm ./env.msgpack
 
 ## MessagePack encode/decode validation
 msgpack-validation:
@@ -119,11 +123,11 @@ msgpack-validation:
 		echo "[MessagePack packages validation for MicroPython (unix port) $$i]" ; \
 		./bin/mpy_ver.sh $$i ; \
 		echo "(CPython) Dump $(offcial_msgpack) by offcial package ..." ; \
-		python -m msgpack_validation.official_dump ; \
+		python -B -m msgpack_validation.official_dump ; \
 		echo "(Micropython unix port) Dump $(custom_msgpack) by custom package ..." ; \
 		micropython -m msgpack_validation.mpy_dump ; \
 		echo "(CPython) Validate $(offcial_msgpack) & $(custom_msgpack) by offcial package ..." ; \
-		python -m msgpack_validation.official_load  ; \
+		python -B -m msgpack_validation.official_load  ; \
 		echo "(Micropython unix port) Validate $(offcial_msgpack) & $(custom_msgpack) by custom package ..." ; \
 		micropython -m msgpack_validation.mpy_load ; \
 		rm ./msgpack_validation/$(offcial_msgpack) && rm ./msgpack_validation/$(custom_msgpack) ; \
