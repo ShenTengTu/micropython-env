@@ -34,6 +34,9 @@ Currentl testing environment:
 
 Before tesing, you need to compile Micopython unix port executable first, see [offcial GitHub Wiki] to setup.
 
+After setup, you must set environment variable `MPY_PATH` as path of local MicroPython repository.
+> Environment variable`MPY_PATH` is used in shell script `bin/build_micropython.sh`
+
 We use [mpfshell] to interactive with MicroPython board,  please install the latest release from PyPi.
 ```
 pip install mpfshell
@@ -67,6 +70,9 @@ To test on ESP32 board, execute the follow command.
 make mpy-testing-esp32
 ```
 >  It will run testing on multiple MicroPython esp32 port versions.
+
+## Development
+See "Development guide" in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 [JSON]: https://www.json.org/ 
 [MessagePack]: https://msgpack.org/
