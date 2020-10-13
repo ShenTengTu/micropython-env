@@ -26,10 +26,10 @@ if sys.platform == "linux":
 else:
     file_path = _Env._select_exist_file(
         path_ioin(cwd, "not.exist1"),
-        path_ioin(cwd, "test_mpy_env.py"),
+        path_ioin(cwd, "tests", "test_mpy_env.py"),
         path_ioin(cwd, "not.exist2"),
     )
-    assert file_path == path_ioin(cwd, "test_mpy_env.py")
+    assert file_path == path_ioin(cwd, "tests", "test_mpy_env.py")
 
 
 ## ==  load_env(),  get_env() == ##
