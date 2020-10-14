@@ -27,6 +27,9 @@ import struct
 
 __all__ = ["serialize", "deserialize"]
 
+# 0x00 ~ 0x7f for application-specific type
+_EXT_LIST = b"\x01"
+
 _b_to_uint = lambda x: int.from_bytes(x, "big")
 
 _two_comp = lambda x, y: (x - 2 ** y * (x >> (y - 1)))
@@ -39,12 +42,49 @@ _iter_encode = (
 
 _number_encode = lambda prefix, fmt, f: prefix + struct.pack(">%s" % fmt, f)
 
+_iterable_type = [list, tuple, dict]
 
-def serialize(obj, single_float=False):
+
+def _app_ext_encode(obj):
+    ## == Ext : List == ##
+    if type(obj) is list:
+        length = len(obj)
+        data = b""
+        for el in obj:
+            data += serialize(el)
+        if length <= 65535:
+            ext_data = _iter_encode(b"", ("H", length), data)
+        else:
+            raise OverflowError("[Ext] List : The list  length out of  range (65535).")
+        return (_EXT_LIST, ext_data)
+
+
+def _app_ext_decode(ext_type, ext_data, _run):
+    ## == Ext : List == ##
+    if ext_type == _EXT_LIST:
+        n_objs = _b_to_uint(ext_data[:2])
+        objs_data = ext_data[2:]
+        c = [None] * n_objs
+        pointer = 0
+        for i in range(n_objs):  # handle N objects
+            el, p = _run(objs_data[pointer:], pointer)
+            c[i] = el
+
+            # If the element is sub list,
+            # 'p' is actual length of bytes that represents the sub list.
+            # The pointer need to update.
+            if type(el) in _iterable_type:
+                p += pointer
+            pointer = p
+        return c
+
+
+def serialize(obj, single_float=False, ext_default=_app_ext_encode):
     """
     Simple function for MessagePack serialization.
 
-    **Note : Not support 'Extension' type**
+    Support Extension type:
+    - 0x01 : List
     """
     t = type(obj)
     ## == Nil, Boolean == ##
@@ -116,7 +156,7 @@ def serialize(obj, single_float=False):
             return _iter_encode(b"\xdb", ("I", length), obj.encode("utf-8"))
         raise OverflowError("The string length is out of the range")
     ## == Array == ##
-    if t is list:
+    if t is tuple:
         length = len(obj)
         data = b""
         for el in obj:
@@ -142,32 +182,57 @@ def serialize(obj, single_float=False):
         if length <= 4294967295:  # map32
             return _iter_encode(b"\xdf", ("I", length), data)
         raise OverflowError("The array length is out of the range")
+
+    ##### Extensions #####
+    if callable(ext_default):
+        ext_type, ext_data = ext_default(obj)
+        length = len(ext_data)
+        tp = ext_type + ext_data
+        if length == 1:  # fixext 1
+            return b"\xd4" + tp
+        elif length == 2:  # fixext 2
+            return b"\xd5" + tp
+        elif length == 4:  # fixext 4
+            return b"\xd6" + tp
+        elif length == 8:  # fixext 8
+            return b"\xd7" + tp
+        elif length == 16:  # fixext 16
+            return b"\xd8" + tp
+        elif length <= 255:  # ext 8
+            return _iter_encode(b"\xc7", ("B", length), tp)
+        elif length <= 65535:  # ext 16
+            return _iter_encode(b"\xc8", ("H", length), tp)
+        elif length <= 4294967295:  # ext 32
+            return _iter_encode(b"\xc9", ("I", length), tp)
+        raise OverflowError("[Ext] : Data Length out of the extension range.")
+
     raise TypeError("The object type is unsupport.")
 
 
-def deserialize(raw_data):
+def deserialize(raw_data, ext_hook=_app_ext_decode):
     """
     Simple function for MessagePack de-serialization.
 
-    **Note : Not support 'Extension' type**
+    Support Extension type:
+    - 0x01 : List
     """
 
     def _array_decode(n_objs, objs_data):
-        c = []
+        c = [None] * n_objs
         pointer = 0
-        for _ in range(n_objs):  # handle N objects
+        for i in range(n_objs):  # handle N objects
             el, p = _run(objs_data[pointer:], pointer)
-            c.append(el)
+            c[i] = el
 
             # If the element is sub list,
             # 'p' is actual length of bytes that represents the sub list.
             # The pointer need to update.
-            if type(el) in (list, dict):
+            if type(el) in _iterable_type:
                 p += pointer
             pointer = p
 
         # 'pointer' is actual length of bytes that represents the list.
-        return (c, pointer + 1)
+        return (tuple(c[i] for i in range(n_objs)), pointer + 1)
 
     def _map_decode(n_items, items_data):
         c = {}
@@ -180,7 +245,7 @@ def deserialize(raw_data):
             # If the element is sub list,
             # 'p_v' is actual length of bytes that represents the sub list.
             # The pointer need to update.
-            if type(v) in (list, dict):
+            if type(v) in _iterable_type:
                 p_v += p_k
             pointer = p_v
 
@@ -272,6 +337,24 @@ def deserialize(raw_data):
             n_items = _b_to_uint(raw[1 : index + 1])
             items_data = raw[index + 1 :]  # The actual length is unknown
             return _map_decode(n_items, items_data)
+
+        ##### Extensions #####
+        if callable(ext_hook):
+            prefixs = b"\xd4\xd5\xd6\xd7\xd8\xc7\xc8\xc9"
+            if prefix in prefixs:
+                index = prefixs.index(prefix)
+                if index <= 4:
+                    length = 2 ** index
+                    ext_type = raw[1:2]
+                    pointer = 2 + length
+                    ext_data = raw[2:pointer]
+                else:
+                    x = 2 ** (index - 5) + 1
+                    length = _b_to_uint(raw[1:x])
+                    ext_type = raw[x : x + 1]
+                    pointer = x + 1 + length
+                    ext_data = raw[x + 1 : pointer]
+                return (ext_hook(ext_type, ext_data, _run), pointer)
 
     obj, _ = _run(raw_data, 0)
     return obj

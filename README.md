@@ -5,6 +5,21 @@ The loader could load environment variables from the one of file format as below
 - [JSON] (default) : The file name is "env.json" (text mode).
 - [MessagePack]: The file name is "env" or "env.msgpack" (binary mode).
 
+## MessagePack
+Note:
+- MessagePack Array corresponds to  Python Tuple, not List
+> Change in v0.2.0
+
+MessagePack predefined extension types:
+|Name|Type|Support?|
+|:-:|:-:|:-:|
+|Timestamp|`-1`|X|
+
+MessagePack application-specific extension types:
+|Name|Type|Support?|Description|
+|:-:|:-:|:-:|:-:|
+|List|`1`|O| Python List, legth limit: 65535. <br><small><i>New in v0.2.0</i></small>|
+
 # How to Use
 ```python
 from mpy_env import load_env, get_env, put_env

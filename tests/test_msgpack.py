@@ -68,7 +68,7 @@ def assertListEqual(x, y):
         type_x = type(item_x)
         type_y = type(item_y)
         assert type_x == type_y
-        if type_x is list:
+        if type_x in (list, tuple):
             assertListEqual(item_x, item_y)
             continue
         if type_x is dict:
@@ -85,7 +85,7 @@ def assertDictEqual(x, y):
         type_x = type(v_x)
         type_y = type(v_y)
         assert type_x == type_y
-        if type_x is list:
+        if type_x in (list, tuple):
             assertListEqual(v_x, v_y)
             continue
         if type_x is dict:
@@ -95,7 +95,7 @@ def assertDictEqual(x, y):
 
 
 ## == Array == ##
-l = [1, b"2", True, "3", False, 0.5, None]
+l = (1, b"2", True, "3", False, 0.5, None)
 assertListEqual(deserialize(serialize(l)), l)  # fixarray
 l_a = l * 5
 assertListEqual(deserialize(serialize(l_a)), l_a)  # array16
@@ -118,9 +118,26 @@ if not is_mpy:  # memory limi
     assertDictEqual(deserialize(serialize(d)), d)  # map32
 del d
 ## == Nest == ##
-l = [1, [b"2", [True, "3", {"1234567890": -70000}], False, 0.5], None]
+l = (1, (b"2", (True, "3", {"1234567890": -70000}), False, 0.5), None)
 assertListEqual(deserialize(serialize(l)), l)
 d = {"bar": False, "wee": {b"2": 1000, True: l}, "foo": l}
 assertDictEqual(deserialize(serialize(d)), d)
 del l
 del d
+
+
+## == Ext : List == ##
+t = [["2"], [False]]
+assertListEqual(deserialize(serialize(t)), t)
+t = [
+    1,
+    (
+        b"2",
+        [True, "3", {"1234567890": -70000, b"list": [1, b"2", [True], "3"]}],
+        [False],
+        0.5,
+    ),
+    None,
+]
+assertListEqual(deserialize(serialize(t)), t)
+del t

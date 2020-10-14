@@ -2,12 +2,14 @@
 from pathlib import Path
 
 
-def get_counts_in_dirs(parent_path: Path, record_list: list):
-    dir_list = list(filter(lambda p: p.is_dir(), parent_path.iterdir()))
+def get_counts_in_dirs(parent_path: Path, record_list: list, ignore_dir=[]):
+    dir_list = list(
+        filter(lambda p: p.is_dir() and p.name not in ignore_dir, parent_path.iterdir())
+    )
     file_list = list(filter(lambda p: p.is_file(), parent_path.iterdir()))
     record_list.append((parent_path, len(dir_list), len(file_list)))
     for p in dir_list:
-        get_counts_in_dirs(p, record_list)
+        get_counts_in_dirs(p, record_list, ignore_dir)
 
 
 def get_upload_cmds(local_dirs: list, relative_path: Path, file_regex="^\\w+\\.py$$"):
@@ -38,9 +40,11 @@ def get_upload_cmds(local_dirs: list, relative_path: Path, file_regex="^\\w+\\.p
     return (";".join(records_mkdir), ";".join(records_put_files), ";".join(records_rm))
 
 
-def generate_cmds_for_upload(path: Path, relative: Path, file_regex="^\\w+\\.py$$"):
+def generate_cmds_for_upload(
+    path: Path, relative: Path, file_regex="^\\w+\\.py$$", ignore_dir=[]
+):
     record_list = []
-    get_counts_in_dirs(path, record_list)
+    get_counts_in_dirs(path, record_list, ignore_dir)
     return get_upload_cmds(record_list, relative, file_regex)
 
 
@@ -57,16 +61,16 @@ path_project = path_here.parent
 path_src = path_project.joinpath("mpy_env")
 path_tests = path_project.joinpath("tests")
 path_examples = path_project.joinpath("examples")
-
+ignore_dir = ["__pycache__"]
 # command map
 mk_vars = {}
 
-cmds = generate_cmds_for_upload(path_src, path_project)
+cmds = generate_cmds_for_upload(path_src, path_project, ignore_dir=ignore_dir)
 mk_vars["mpy_mk_src_dirs"] = cmds[0]
 mk_vars["mpy_put_src_files"] = cmds[1]
 mk_vars["mpy_rm_src"] = cmds[2]
 
-cmds = generate_cmds_for_upload(path_tests, path_tests.parent)
+cmds = generate_cmds_for_upload(path_tests, path_tests.parent, ignore_dir=ignore_dir)
 mk_vars["mpy_mk_tests_dirs"] = cmds[0]
 mk_vars["mpy_put_tests_files"] = cmds[1]
 mk_vars["mpy_rm_tests"] = cmds[2]
