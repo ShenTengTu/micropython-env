@@ -1,4 +1,4 @@
-_l = [1, [b"2", [True, "3", {"1234567890": -70000}], False, 0.5], None]
+_l = (1, (b"2", (True, "3", {"1234567890": -70000}), False, 0.5), None)
 DATA = {"bar": False, "wee": {b"2": 1000, True: _l}, "foo": 3.14159265359}
 
 
@@ -10,7 +10,7 @@ def assertListEqual(x, y):
         type_x = type(item_x)
         type_y = type(item_y)
         assert type_x == type_y
-        if type_x is list:
+        if type_x is tuple:
             assertListEqual(item_x, item_y)
             continue
         if type_x is dict:
@@ -27,7 +27,7 @@ def assertDictEqual(x, y):
         type_x = type(v_x)
         type_y = type(v_y)
         assert type_x == type_y
-        if type_x is list:
+        if type_x is tuple:
             assertListEqual(v_x, v_y)
             continue
         if type_x is dict:

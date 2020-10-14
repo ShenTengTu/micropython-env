@@ -23,7 +23,7 @@ define _pyc_0
 import os
 import json
 from mpy_env import serialize
-data = {"foo": True, "bar": 1000, "wee": [3.14159]}
+data = {"foo": True, "bar": 1000, "wee": (3.14159, ), "ext_list": [["2"], [False]]}
 cwd = os.getcwd()
 with open(cwd  + "/env.json", "w+") as fp:
     fp.write(json.dumps(data))
@@ -135,7 +135,7 @@ msgpack-validation:
 
 # Update m_mpfs_cmd.mk before execute `mpy_upload_targets`
 ifndef MAKE_RESTARTS
-ifneq ($(filter $(mpy_upload_targets),$(MAKECMDGOALS)),)
+ifneq ($(filter mpy-testing-esp32 $(mpy_upload_targets),$(MAKECMDGOALS)),)
 # Force update included makefile & reload them.
 m_mpfs_cmd.mk: .FORCE_UPDATE
 	@python -B -u ./tools/dump_mpfs_cmd.py

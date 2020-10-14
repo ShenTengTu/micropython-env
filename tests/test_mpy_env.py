@@ -31,11 +31,13 @@ else:
 
 ## ==  load_env(),  get_env() == ##
 # if is_mpy : #and not sys.platform == "linux":
-# In Makefile, the testing data is  {"foo": True, "bar": 1000, "wee": [3.14159]}
+# See `_pyc_0` In Makefile
 load_env(verbose=True)  # load 'env.json' at root
 assert get_env("foo") == True
 assert get_env("bar") == 1000
 assert get_env("wee")[0] == 3.14159
+assert get_env("ext_list")[0][0] == "2"
+assert get_env("ext_list")[1][0] == False
 
 # Force clean up _Env
 if is_mpy:
@@ -48,7 +50,15 @@ else:
 load_env(1, verbose=True)  # load 'env.msgpack' at root
 assert get_env("foo") == True
 assert get_env("bar") == 1000
-assert get_env("wee")[0] == 3.14159
+obj = get_env("wee")
+assert type(obj) is tuple
+assert obj[0] == 3.14159
+obj = get_env("ext_list")
+assert type(obj) is list
+assert type(obj[0]) is list
+assert type(obj[1]) is list
+assert obj[0][0] == "2"
+assert obj[1][0] == False
 
 ## ==  put_env() == ##
 put_env("platform", sys.platform)
