@@ -25,6 +25,8 @@ import io
 import json
 from .msgpack import serialize, deserialize
 
+__version__ = "0.2.0"
+
 
 class _Env:
     """Environment variable loader For MicroPython board.
